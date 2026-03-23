@@ -559,10 +559,10 @@ copies or substantial portions of the Software.
 
 ## 📬 Contact
 
-- **Author:** [YOUR NAME]
-- **Email:** [YOUR EMAIL]
-- **GitHub:** [@YOUR-USERNAME](https://github.com/YOUR-USERNAME)
-- **LinkedIn:** [YOUR LINKEDIN](https://linkedin.com/in/YOUR-PROFILE)
+- **Author:** [jatinkumar p]
+- **Email:** [parmarjatin4911@gmail.com]
+- **GitHub:** [@jatinkumar parmar](https://github.com/parmarjh)
+- **LinkedIn:** [@jatinumar parmar](https://linkedin.com/in/jhparmar)
 
 ---
 
