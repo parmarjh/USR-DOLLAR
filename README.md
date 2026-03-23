@@ -234,7 +234,7 @@ analyst = AnalystAgent(llm_provider="openrouter", model_name="anthropic/claude-3
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/[YOUR-USERNAME]/multi-agent-research-system.git
+git clone https://github.com/parmarjh/multi-agent-research-system.git
 cd multi-agent-research-system
 ```
 
