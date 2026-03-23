@@ -34,7 +34,12 @@ class BaseAgent(ABC):
             "error": "red",
         }
         style = style_map.get(level, "white")
-        console.print(f"  [{style}]{entry}[/{style}]")
+        try:
+            console.print(f"  [{style}]{entry}[/{style}]")
+        except UnicodeEncodeError:
+            # Fallback for legacy Windows CP1252 encoding crashes
+            safe_entry = entry.encode('ascii', 'backslashreplace').decode('ascii')
+            console.print(f"  [{style}]{safe_entry}[/{style}]")
 
     @abstractmethod
     def execute(self, *args, **kwargs):

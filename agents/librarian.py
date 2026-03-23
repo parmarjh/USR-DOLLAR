@@ -99,7 +99,7 @@ class LibrarianAgent(BaseAgent):
                 results["all_chunks"].extend(doc_data["chunks"])
 
         self.log(
-            f"✅ Processed {results['total_files']} files, "
+            f"[OK] Processed {results['total_files']} files, "
             f"{results['total_pages']} pages, "
             f"{results['total_chunks']} chunks",
             "success"

@@ -35,9 +35,6 @@
 - [🛠️ Tech Stack](#️-tech-stack)
 - [🚀 Quick Start](#-quick-start)
 - [💻 Usage](#-usage)
-- [🖥️ React Web Dashboard](#️-react-web-dashboard)
-- [🔥 God Mode — How to Run Agent Pipeline](#-god-mode--how-to-run-agent-pipeline)
-- [❓ Important Research Questions](#-important-research-questions)
 - [🧪 Running Tests](#-running-tests)
 - [📸 Screenshots](#-screenshots)
 - [🤝 Contributing](#-contributing)
@@ -66,6 +63,7 @@ This project solves that by creating a **team of 3 specialized AI agents** that 
 |---------|-------------|
 | 🤖 **3 Specialized Agents** | Librarian, Researcher, Analyst — each with a distinct role |
 | 📚 **PDF Processing** | Automatic text extraction, keyword analysis, and chunking |
+| ⚡ **God Mode** | Mass-ingest whole directories of papers and generate a global master report. |
 | 🔍 **Semantic Search** | FAISS-powered vector search with one-to-one accuracy |
 | 🧠 **Multi-LLM Support** | OpenRouter (100+ models), Gemini (free), OpenAI, Ollama (local) |
 | 📊 **4 Analysis Modes** | Analyze, Summarize, Compare, and Develop |
@@ -473,168 +471,11 @@ python main.py --query "test query" --mode summarize
 
 ---
 
-## 🖥️ React Web Dashboard
-
-The system includes a **beautiful React dashboard** powered by Vite:
-
-### Start the Dashboard
-
-```bash
-# Terminal 1: Start the FastAPI backend
-python -m uvicorn api:app --reload --port 8000
-
-# Terminal 2: Start the React frontend
-cd frontend
-npm run dev
-
-# Open http://localhost:5173 in your browser
-```
-
-### Dashboard Features
-
-| Feature | Description |
-|---------|-------------|
-| 🤖 Agent Cards | Real-time status for all 3 agents |
-| 📤 Drag & Drop Upload | Drop PDFs directly into the browser |
-| 🚀 One-Click Ingest | Process all uploaded PDFs instantly |
-| 🔍 4 Query Modes | Analyze, Summarize, Compare, Develop |
-| 📊 Live Stats | Document count, vector count, model info |
-| 📎 Source Citations | See exactly which chunks were used |
-| 📚 Document Table | View all indexed documents |
-| 🌙 Dark Glassmorphism | Premium dark theme with animations |
-
----
-
-## 🔥 God Mode — How to Run Agent Pipeline
-
-> **Step-by-step guide to get from zero to AI-powered research insights.**
-
-### Step 1: Install Everything
-
-```bash
-# Clone the repository
-git clone https://github.com/parmarjh/USR-DOLLAR.git
-cd USR-DOLLAR/code/multi_agent_system
-
-# Create virtual environment
-python -m venv venv
-venv\Scripts\activate          # Windows
-# source venv/bin/activate     # macOS/Linux
-
-# Install Python dependencies
-pip install -r requirements.txt
-
-# Install React frontend
-cd frontend
-npm install
-cd ..
-```
-
-### Step 2: Configure Your API Key
-
-```bash
-# Copy the example config
-copy .env.example .env
-
-# Edit .env → set your OpenRouter API key
-# Get free key at: https://openrouter.ai/keys
-```
-
-### Step 3: Add Your PDFs
-
-```bash
-# Place your research papers in the my_papers/ folder
-copy your_paper.pdf my_papers/
-
-# Or generate a sample paper for testing:
-python create_sample_paper.py
-```
-
-### Step 4: Start the Servers
-
-```bash
-# Terminal 1 — Backend (FastAPI)
-python -m uvicorn api:app --reload --port 8000
-
-# Terminal 2 — Frontend (React)
-cd frontend
-npm run dev
-```
-
-### Step 5: Run the Agent Pipeline
-
-1. **Open** `http://localhost:5173` in your browser
-2. **Upload** a PDF using the drag-and-drop area (or files are already in `my_papers/`)
-3. **Click** `🚀 Ingest All PDFs` — this triggers:
-   - 📚 **Librarian**: Reads PDF → extracts text → chunks → indexes to SQLite
-   - 🔍 **Researcher**: Embeds chunks → stores in FAISS vector database
-4. **Type a question** in the query box, e.g.:
-   > "What is the core architecture of the multi-agent system?"
-5. **Select a mode**: Analyze / Summarize / Compare / Develop
-6. **Click** `🧠 Run Agent Pipeline` — this triggers:
-   - 🔍 **Researcher**: Semantic search → finds top-3 matching chunks
-   - 🧠 **Analyst**: Sends context + query to LLM → generates structured report
-7. **View results** in the right panel with source citations
-
-### Alternative: CLI Mode
-
-```bash
-# Ingest PDFs
-python main.py --ingest ./my_papers
-
-# Query
-python main.py --query "What is the core architecture?" --mode analyze
-python main.py --query "Compare RAG vs Fine-tuning" --mode compare
-python main.py --query "Summarize the key findings" --mode summarize
-
-# Interactive REPL
-python main.py
-```
-
----
-
-## ❓ Important Research Questions
-
-Ready-to-use questions for the sample paper (see `IMPORTANT_QUESTIONS.md` for full list):
-
-### 📊 Analyze Mode
-| # | Question |
-|---|----------|
-| 1 | What is the core architecture of the multi-agent system and how do the three agents collaborate? |
-| 2 | How does the RAG pattern work in this system? |
-| 3 | What are the key design decisions for vector database and embedding model selection? |
-| 4 | How does the system achieve one-to-one accuracy in retrieval? |
-| 5 | What are the performance benchmarks? |
-
-### 📝 Summarize Mode
-| # | Question |
-|---|----------|
-| 6 | Summarize the main findings and results of the paper |
-| 7 | What are the key capabilities of each agent? |
-| 8 | Summarize the chunking strategies evaluated |
-
-### ⚖️ Compare Mode
-| # | Question |
-|---|----------|
-| 9 | Compare RAG vs Fine-tuning approaches |
-| 10 | Compare the three chunking strategies |
-| 11 | Compare OpenRouter vs Gemini vs Ollama |
-
-### 💡 Develop Mode
-| # | Question |
-|---|----------|
-| 12 | Develop a plan for scaling to 10,000+ documents |
-| 13 | Develop a roadmap for multi-format support |
-| 14 | Develop a strategy for agent memory |
-
----
-
 ## 📸 Screenshots
 
-### React Dashboard
-![Multi-Agent Dashboard](https://raw.githubusercontent.com/parmarjh/USR-DOLLAR/main/code/multi_agent_system/screenshots/dashboard.png)
+<!-- Replace with actual screenshots -->
 
-### Agent Setup Table (Terminal)
+### Agent Setup Table
 ```
 ┏━━━┳━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┳━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┳━━━━━━━━━━━━┓
 ┃ # ┃ Agent Name      ┃ Role       ┃ Description                  ┃ Status     ┃
@@ -662,8 +503,7 @@ Ready-to-use questions for the sample paper (see `IMPORTANT_QUESTIONS.md` for fu
 - [x] 4 analysis modes (analyze, summarize, compare, develop)
 - [x] Rich terminal UI with setup tables
 - [x] Interactive REPL mode
-- [x] React web dashboard with FastAPI backend
-- [x] Sample research paper & important questions
+- [ ] Streamlit web dashboard
 - [ ] Multi-format support (Word, Excel, Markdown)
 - [ ] Redis Command Bus for distributed agents
 - [ ] Agent memory & conversation history
@@ -719,8 +559,10 @@ copies or substantial portions of the Software.
 
 ## 📬 Contact
 
-- **GitHub:** [@parmarjh](https://github.com/parmarjh)
-- **Repository:** [USR-DOLLAR](https://github.com/parmarjh/USR-DOLLAR)
+- **Author:** [YOUR NAME]
+- **Email:** [YOUR EMAIL]
+- **GitHub:** [@YOUR-USERNAME](https://github.com/YOUR-USERNAME)
+- **LinkedIn:** [YOUR LINKEDIN](https://linkedin.com/in/YOUR-PROFILE)
 
 ---
 
@@ -729,5 +571,5 @@ copies or substantial portions of the Software.
 </p>
 
 <p align="center">
-  Built with ❤️ using Python, FAISS, LangChain, OpenRouter, React, and Vite
+  Built with ❤️ using Python, FAISS, LangChain, OpenRouter, and Google Gemini
 </p>

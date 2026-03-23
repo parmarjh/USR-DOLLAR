@@ -249,6 +249,16 @@ def get_stats():
     }
 
 
+@app.get("/api/god-mode-report")
+def get_god_mode_report():
+    """Get the God Mode master report if it exists."""
+    report_path = os.path.join(os.path.dirname(__file__), "GOD_MODE_MASTER_REPORT.md")
+    if os.path.exists(report_path):
+        with open(report_path, "r", encoding="utf-8") as f:
+            return {"exists": True, "content": f.read()}
+    return {"exists": False, "content": ""}
+
+
 @app.get("/api/config")
 def get_config():
     """Get current system configuration."""

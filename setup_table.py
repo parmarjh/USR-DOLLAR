@@ -8,7 +8,6 @@ Each agent is registered with its role, capabilities, and status.
 from dataclasses import dataclass, field
 from enum import Enum
 from typing import Optional, Dict, List, Any
-from tabulate import tabulate
 from rich.console import Console
 from rich.table import Table
 from rich.panel import Panel
@@ -18,14 +17,14 @@ import os
 
 
 # ==========================================
-# Agent Status Enum
+# Agent Status Enum (ASCII SAFE)
 # ==========================================
 class AgentStatus(Enum):
-    IDLE = "🟢 Idle"
-    WORKING = "🟡 Working"
-    DONE = "✅ Done"
-    ERROR = "🔴 Error"
-    DISABLED = "⚪ Disabled"
+    IDLE = "[IDLE]"
+    WORKING = "[WORKING]"
+    DONE = "[DONE]"
+    ERROR = "[ERROR]"
+    DISABLED = "[DISABLED]"
 
 
 # ==========================================
@@ -49,7 +48,7 @@ class AgentDefinition:
     capabilities: List[str]
     status: AgentStatus = AgentStatus.IDLE
     config: Dict[str, Any] = field(default_factory=dict)
-    last_action: str = "—"
+    last_action: str = "-"
     processed_count: int = 0
 
     def to_dict(self) -> dict:
@@ -118,7 +117,7 @@ class AgentSetupTable:
             description="Analyzes retrieved context and generates structured insights",
             capabilities=[
                 "LLM-powered analysis (OpenRouter / Gemini / OpenAI / Ollama)",
-                "OpenRouter — access 100+ models via one API key",
+                "OpenRouter access",
                 "Structured summary generation",
                 "Comparison reports",
                 "Idea development",
@@ -134,7 +133,7 @@ class AgentSetupTable:
 
     def __init__(self):
         self.agents: Dict[str, AgentDefinition] = {}
-        self.console = Console()
+        self.console = Console(force_terminal=False)
         self._register_defaults()
 
     def _register_defaults(self):
@@ -156,7 +155,7 @@ class AgentSetupTable:
             config=config or {},
         )
         self.agents[role.value] = agent
-        self.console.print(f"[green]✅ Agent '{name}' created with role '{role.value}'[/green]")
+        self.console.print(f"[green][OK] Agent '{name}' created with role '{role.value}'[/green]")
         return agent
 
     def get_agent(self, role: str) -> Optional[AgentDefinition]:
@@ -191,7 +190,7 @@ class AgentSetupTable:
     def display_setup_table(self):
         """Display the Agent Setup Table with Rich formatting."""
         table = Table(
-            title="🤖 Multi-Agent Setup Table",
+            title="Multi-Agent Setup Table",
             title_style="bold cyan",
             border_style="bright_blue",
             show_lines=True,
@@ -208,7 +207,7 @@ class AgentSetupTable:
         table.add_column("Last Action", style="dim", min_width=15)
 
         for idx, (role, agent) in enumerate(self.agents.items(), 1):
-            caps = "\n".join([f"• {c}" for c in agent.capabilities[:3]])
+            caps = "\n".join([f"- {c}" for c in agent.capabilities[:3]])
             if len(agent.capabilities) > 3:
                 caps += f"\n  (+{len(agent.capabilities) - 3} more)"
 
@@ -230,7 +229,7 @@ class AgentSetupTable:
     def display_config_table(self):
         """Display the configuration for each agent."""
         table = Table(
-            title="⚙️  Agent Configuration",
+            title="Agent Configuration",
             title_style="bold yellow",
             border_style="yellow",
             show_lines=True,
@@ -253,22 +252,22 @@ class AgentSetupTable:
         """Display the agent pipeline flow visually."""
         flow = Panel(
             Text.from_markup(
-                "[bold cyan]📄 PDF Files[/bold cyan]\n"
-                "     │\n"
-                "     ▼\n"
-                "[bold magenta]📚 THE LIBRARIAN[/bold magenta]\n"
-                "  [dim]Scan → Extract → Index → Chunk[/dim]\n"
-                "     │\n"
-                "     ▼\n"
-                "[bold magenta]🔍 THE RESEARCHER[/bold magenta]\n"
-                "  [dim]Embed → Store → Search → Retrieve[/dim]\n"
-                "     │\n"
-                "     ▼\n"
-                "[bold magenta]🧠 THE ANALYST[/bold magenta]\n"
-                "  [dim]Analyze → Summarize → Compare → Report[/dim]\n"
-                "     │\n"
-                "     ▼\n"
-                "[bold green]📊 Final Insights & Reports[/bold green]"
+                "[bold cyan]DOCS: PDF Files[/bold cyan]\n"
+                "     |\n"
+                "     V\n"
+                "[bold magenta]LIBRARIAN[/bold magenta]\n"
+                "  [dim]Scan -> Extract -> Index -> Chunk[/dim]\n"
+                "     |\n"
+                "     V\n"
+                "[bold magenta]RESEARCHER[/bold magenta]\n"
+                "  [dim]Embed -> Store -> Search -> Retrieve[/dim]\n"
+                "     |\n"
+                "     V\n"
+                "[bold magenta]ANALYST[/bold magenta]\n"
+                "  [dim]Analyze -> Summarize -> Compare -> Report[/dim]\n"
+                "     |\n"
+                "     V\n"
+                "[bold green]STATS: Final Insights[/bold green]"
             ),
             title="Agent Pipeline Flow",
             title_align="center",
@@ -284,7 +283,7 @@ class AgentSetupTable:
         data = {role: agent.to_dict() for role, agent in self.agents.items()}
         with open(filepath, "w") as f:
             json.dump(data, f, indent=2)
-        self.console.print(f"[green]📁 Setup table exported to {filepath}[/green]")
+        self.console.print(f"[green][FILE] Setup table exported to {filepath}[/green]")
 
 
 # ==========================================

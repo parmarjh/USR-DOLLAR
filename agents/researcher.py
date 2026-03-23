@@ -64,7 +64,7 @@ class ResearcherAgent(BaseAgent):
         self.log(f"Loading embedding model: {self.model_name}")
         self.embedder = SentenceTransformer(self.model_name)
         self.vector_dim = self.embedder.get_sentence_embedding_dimension()
-        self.log(f"✅ Model loaded (dimension: {self.vector_dim})", "success")
+        self.log(f"[OK] Model loaded (dimension: {self.vector_dim})", "success")
 
     def execute(self, chunks: List[str], metadata: List[Dict] = None) -> bool:
         """
@@ -102,7 +102,7 @@ class ResearcherAgent(BaseAgent):
             self.chunk_metadata.extend([{"source": "unknown"}] * len(chunks))
 
         self.log(
-            f"✅ Stored {len(chunks)} chunks. Total in index: {self.index.ntotal}",
+            f"Stored {len(chunks)} chunks. Total in index: {self.index.ntotal}",
             "success"
         )
         return True
@@ -120,7 +120,7 @@ class ResearcherAgent(BaseAgent):
             return []
 
         k = top_k or self.top_k
-        self.log(f"🔎 Searching for: '{query[:60]}...' (top-{k})")
+        self.log(f"[SEARCH] Searching for: '{query[:60]}...' (top-{k})")
 
         # Encode query
         query_vector = self.embedder.encode([query]).astype('float32')
@@ -163,7 +163,7 @@ class ResearcherAgent(BaseAgent):
                     "metadata": self.chunk_metadata,
                 }, f, ensure_ascii=False, indent=2)
 
-            self.log(f"💾 Index saved to {save_path} ({self.index.ntotal} vectors)", "success")
+            self.log(f"[SAVE] Index saved to {save_path} ({self.index.ntotal} vectors)", "success")
         else:
             self.log("No index to save", "warning")
 
@@ -182,7 +182,7 @@ class ResearcherAgent(BaseAgent):
                 self.chunks = data["chunks"]
                 self.chunk_metadata = data.get("metadata", [])
 
-            self.log(f"📂 Index loaded from {load_path} ({self.index.ntotal} vectors)", "success")
+            self.log(f"[LOAD] Index loaded from {load_path} ({self.index.ntotal} vectors)", "success")
         else:
             self.log(f"No saved index found at {load_path}", "warning")
 

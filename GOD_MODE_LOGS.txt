@@ -1,0 +1,85 @@
+﻿python : WARNING: All log 
+messages before 
+absl::InitializeLog() is 
+called are written to STDERR
+At line:1 char:1
++ python god_mode.py 2>&1 | 
+Out-File -FilePath 
+GOD_MODE_LOGS.txt -Encod ...
++ ~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo           
+   : NotSpecified: (WARNING  
+  : All lo...itten to STDE   
+ RR:String) [], RemoteExc    
+eption
+    + FullyQualifiedErrorId  
+   : NativeCommandError
+ 
+I0000 
+00:00:1773985168.396687   
+22572 port.cc:153] oneDNN 
+custom operations are on. 
+You may see slightly 
+different numerical results 
+due to floating-point 
+round-off errors from 
+different computation 
+orders. To turn them off, 
+set the environment variable 
+`TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING: All log messages 
+before absl::InitializeLog() 
+is called are written to 
+STDERR
+I0000 
+00:00:1773985180.691621   
+22572 port.cc:153] oneDNN 
+custom operations are on. 
+You may see slightly 
+different numerical results 
+due to floating-point 
+round-off errors from 
+different computation 
+orders. To turn them off, 
+set the environment variable 
+`TF_ENABLE_ONEDNN_OPTS=0`.
+WARNING:tensorflow:From C:\Us
+ers\parma\AppData\Local\Packa
+ges\PythonSoftwareFoundation.
+Python.3.12_qbz5n2kfra8p0\Loc
+alCache\local-packages\Python
+312\site-packages\tf_keras\sr
+c\losses.py:2976: The name tf
+.losses.sparse_softmax_cross_
+entropy is deprecated. 
+Please use tf.compat.v1.losse
+s.sparse_softmax_cross_entrop
+y instead.
+
+
+================================================================================
+  GOD MODE: AUTOMATED RESEARCH PIPELINE
+  Processing all papers and building semantic memory
+================================================================================
+
+[*] Initializing Agents... (Provider: openrouter)
+
+  [11:10:00] [The Librarian] Initialized with database ready
+  [11:10:00] [The Researcher] Loading embedding model: all-MiniLM-L6-v2
+  [11:10:07] [The Researcher] [OK] Model loaded (dimension: 384)
+  [11:10:12] [The Analyst] OpenRouter initialized (model: 
+google/gemini-2.0-flash-001)
++-----------------------------------------------------------------------------+
+|                                                                             |
+|    Multi-Agent Research System                                              |
+|    Three specialized agents working together                                |
+|                                                                             |
+|    [LIBRARIAN] -> [RESEARCHER] -> [ANALYST]                                 |
+|                                                                             |
++-----------------------------------------------------------------------------+
+
+[*] Found 18 papers. Starting mass ingestion...
+[WORKING] Ingesting & Indexing... (This may take a few minutes)
+
+
+[ERROR] Ingestion failed: 'charmap' codec can't encode characters in position 0-2: character maps to <undefined>

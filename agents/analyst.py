@@ -77,7 +77,7 @@ class AnalystAgent(BaseAgent):
                     "X-Title": "Multi-Agent Research System",
                 },
             )
-            self.log(f"✅ OpenRouter initialized (model: {model})", "success")
+            self.log(f"OpenRouter initialized (model: {model})", "success")
         except ImportError:
             self.log("Install: pip install langchain-openai", "error")
 
@@ -94,7 +94,7 @@ class AnalystAgent(BaseAgent):
                 google_api_key=key,
                 temperature=self.temperature,
             )
-            self.log("✅ Google Gemini initialized", "success")
+            self.log("Google Gemini initialized", "success")
         except ImportError:
             self.log("Install: pip install langchain-google-genai", "error")
 
@@ -111,19 +111,19 @@ class AnalystAgent(BaseAgent):
                 openai_api_key=key,
                 temperature=self.temperature,
             )
-            self.log("✅ OpenAI initialized", "success")
+            self.log("OpenAI initialized", "success")
         except ImportError:
             self.log("Install: pip install langchain-openai", "error")
 
     def _init_ollama(self):
         """Initialize Ollama (local LLM)."""
         try:
-            from langchain_community.llms import Ollama
-            self.llm = Ollama(
+            from langchain_ollama import ChatOllama
+            self.llm = ChatOllama(
                 model=self.model_name or "llama3",
                 temperature=self.temperature,
             )
-            self.log("✅ Ollama initialized", "success")
+            self.log("Ollama initialized", "success")
         except ImportError:
             self.log("Install: pip install ollama", "error")
 

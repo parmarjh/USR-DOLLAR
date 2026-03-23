@@ -1,406 +1,387 @@
-import { useState, useEffect, useCallback } from 'react'
-import './index.css'
+import React, { useState, useEffect, useRef } from 'react';
 
-const API_BASE = 'http://localhost:8000'
+// API Configuration
+const API_BASE = 'http://localhost:8000';
 
-function App() {
-  const [agents, setAgents] = useState([])
-  const [stats, setStats] = useState(null)
-  const [config, setConfig] = useState(null)
-  const [documents, setDocuments] = useState([])
-  const [query, setQuery] = useState('')
-  const [mode, setMode] = useState('analyze')
-  const [result, setResult] = useState(null)
-  const [sources, setSources] = useState([])
-  const [loading, setLoading] = useState(false)
-  const [ingesting, setIngesting] = useState(false)
-  const [uploading, setUploading] = useState(false)
-  const [toast, setToast] = useState(null)
-  const [activeStep, setActiveStep] = useState(null)
-  const [dragging, setDragging] = useState(false)
-
-  // Toast helper
-  const showToast = useCallback((message, isError = false) => {
-    setToast({ message, isError })
-    setTimeout(() => setToast(null), 4000)
-  }, [])
+const App = () => {
+  // State
+  const [agents, setAgents] = useState([]);
+  const [documents, setDocuments] = useState([]);
+  const [stats, setStats] = useState(null);
+  const [config, setConfig] = useState(null);
+  const [godReport, setGodReport] = useState(null);
+  
+  const [query, setQuery] = useState('');
+  const [mode, setMode] = useState('analyze');
+  const [loading, setLoading] = useState(false);
+  const [result, setResult] = useState(null);
+  const [sources, setSources] = useState([]);
+  
+  const [uploading, setUploading] = useState(false);
+  const [ingesting, setIngesting] = useState(false);
+  const [toast, setToast] = useState(null);
+  
+  const fileInputRef = useRef(null);
 
   // Fetch initial data
   useEffect(() => {
-    fetchAgents()
-    fetchStats()
-    fetchConfig()
-    fetchDocuments()
-  }, [])
+    fetchData();
+    checkGodReport();
+    
+    // Check god report every 30 seconds
+    const interval = setInterval(checkGodReport, 30000);
+    return () => clearInterval(interval);
+  }, []);
 
-  async function fetchAgents() {
+  const checkGodReport = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/agents`)
-      const data = await res.json()
-      setAgents(data.agents || [])
+      const res = await fetch(`${API_BASE}/api/god-mode-report`);
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.exists) setGodReport(data.content);
     } catch (e) {
-      console.error('Cannot reach backend:', e)
+      // Silently fail if not found
     }
-  }
+  };
 
-  async function fetchStats() {
+  const fetchData = async () => {
     try {
-      const res = await fetch(`${API_BASE}/api/stats`)
-      setStats(await res.json())
-    } catch (e) { /* backend not running */ }
-  }
+      const [agentsRes, docsRes, statsRes, configRes] = await Promise.all([
+        fetch(`${API_BASE}/api/agents`),
+        fetch(`${API_BASE}/api/documents`),
+        fetch(`${API_BASE}/api/stats`),
+        fetch(`${API_BASE}/api/config`)
+      ]);
 
-  async function fetchConfig() {
-    try {
-      const res = await fetch(`${API_BASE}/api/config`)
-      setConfig(await res.json())
-    } catch (e) { /* backend not running */ }
-  }
+      const agentsData = await agentsRes.json();
+      const docsData = await docsRes.json();
+      const statsData = await statsRes.json();
+      const configData = await configRes.json();
 
-  async function fetchDocuments() {
-    try {
-      const res = await fetch(`${API_BASE}/api/documents`)
-      const data = await res.json()
-      setDocuments(data.documents || [])
-    } catch (e) { /* backend not running */ }
-  }
-
-  // Upload PDF
-  async function handleUpload(file) {
-    if (!file || !file.name.toLowerCase().endsWith('.pdf')) {
-      showToast('Only PDF files are accepted', true)
-      return
+      setAgents(agentsData.agents);
+      setDocuments(docsData.documents);
+      setStats(statsData);
+      setConfig(configData);
+    } catch (error) {
+      console.error('Error fetching data:', error);
+      showToast('Backend connection failed', 'error');
     }
-    setUploading(true)
-    try {
-      const formData = new FormData()
-      formData.append('file', file)
-      const res = await fetch(`${API_BASE}/api/upload`, { method: 'POST', body: formData })
-      if (!res.ok) throw new Error('Upload failed')
-      showToast(`✅ Uploaded: ${file.name}`)
-    } catch (e) {
-      showToast(`Upload failed: ${e.message}`, true)
-    }
-    setUploading(false)
-  }
+  };
 
-  // Ingest documents
-  async function handleIngest() {
-    setIngesting(true)
-    setActiveStep('librarian')
-    try {
-      const res = await fetch(`${API_BASE}/api/ingest`, { method: 'POST' })
-      if (!res.ok) throw new Error('Ingest failed')
-      const data = await res.json()
-      setActiveStep('researcher')
-      setTimeout(() => {
-        setActiveStep(null)
-        showToast(`✅ Ingested ${data.total_files} files, ${data.total_chunks} chunks`)
-        fetchStats()
-        fetchDocuments()
-        fetchAgents()
-      }, 800)
-    } catch (e) {
-      showToast(`Ingest failed: ${e.message}`, true)
-      setActiveStep(null)
-    }
-    setIngesting(false)
-  }
+  const showToast = (message, type = 'success') => {
+    setToast({ message, type });
+    setTimeout(() => setToast(null), 4000);
+  };
 
-  // Query system
-  async function handleQuery(e) {
-    e.preventDefault()
-    if (!query.trim()) return
-    setLoading(true)
-    setResult(null)
-    setSources([])
-    setActiveStep('researcher')
+  const handleQuery = async (e) => {
+    e.preventDefault();
+    if (!query.trim()) return;
+
+    setLoading(true);
+    setResult(null);
+    setSources([]);
+
     try {
-      const res = await fetch(`${API_BASE}/api/query`, {
+      const response = await fetch(`${API_BASE}/api/query`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ question: query, mode, top_k: 3 }),
-      })
-      if (!res.ok) {
-        const err = await res.json()
-        throw new Error(err.detail || 'Query failed')
-      }
-      setActiveStep('analyst')
-      const data = await res.json()
-      setTimeout(() => {
-        setResult(data.answer)
-        setSources(data.sources || [])
-        setActiveStep(null)
-      }, 500)
-    } catch (e) {
-      showToast(e.message, true)
-      setActiveStep(null)
+        body: JSON.stringify({ question: query, mode, top_k: 5 })
+      });
+
+      if (!response.ok) throw new Error('Query failed');
+
+      const data = await response.json();
+      setResult(data.answer);
+      setSources(data.sources);
+      showToast('Insights Generated');
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false)
-  }
+  };
 
-  // Drag & drop
-  function onDragOver(e) { e.preventDefault(); setDragging(true) }
-  function onDragLeave() { setDragging(false) }
-  function onDrop(e) {
-    e.preventDefault()
-    setDragging(false)
-    const file = e.dataTransfer.files[0]
-    if (file) handleUpload(file)
-  }
+  const handleFileUpload = async (e) => {
+    const files = e.target.files;
+    if (!files.length) return;
 
-  const modes = [
-    { id: 'analyze', label: '📊 Analyze', desc: 'Deep analysis' },
-    { id: 'summarize', label: '📝 Summarize', desc: 'Key points' },
-    { id: 'compare', label: '⚖️ Compare', desc: 'Side-by-side' },
-    { id: 'develop', label: '💡 Develop', desc: 'Action plan' },
-  ]
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', files[0]);
 
-  const roleClass = (role) => {
-    if (role === 'librarian') return 'librarian'
-    if (role === 'researcher') return 'researcher'
-    if (role === 'analyst') return 'analyst'
-    return ''
-  }
+    try {
+      const response = await fetch(`${API_BASE}/api/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) throw new Error('Upload failed');
+      
+      showToast(`File uploaded successfully`);
+      fetchData();
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleIngest = async () => {
+    setIngesting(true);
+    try {
+      const response = await fetch(`${API_BASE}/api/ingest`, { method: 'POST' });
+      if (!response.ok) throw new Error('Ingestion failed');
+      
+      const data = await response.json();
+      showToast(`Processed ${data.total_files} documents`);
+      fetchData();
+    } catch (error) {
+      showToast(error.message, 'error');
+    } finally {
+      setIngesting(false);
+    }
+  };
+
+  const formatMarkdown = (text) => {
+    if (!text) return text;
+    return text.split('\n').map((line, i) => {
+      if (line.startsWith('# ')) return <h1 key={i} style={{ color: 'var(--accent-purple)', marginBottom: '15px' }}>{line.replace('# ', '')}</h1>;
+      if (line.startsWith('## ')) return <h2 key={i} style={{ color: 'var(--accent-cyan)', marginTop: '20px', marginBottom: '10px' }}>{line.replace('## ', '')}</h2>;
+      if (line.startsWith('### ')) return <h3 key={i} style={{ color: 'var(--text-primary)', marginTop: '15px', marginBottom: '5px' }}>{line.replace('### ', '')}</h3>;
+      if (line.startsWith('- ') || line.startsWith('* ')) return <li key={i} style={{ marginLeft: '20px', marginBottom: '5px' }}>{line.substring(2)}</li>;
+      if (line.trim() === '---') return <hr key={i} style={{ border: 'none', borderTop: '1px solid var(--border-color)', margin: '20px 0' }} />;
+      if (line.trim() === '') return <div key={i} style={{ height: '10px' }} />;
+      return <p key={i} style={{ marginBottom: '10px' }}>{line}</p>;
+    });
+  };
 
   return (
-    <>
-      {/* HEADER */}
+    <div className="app">
+      {/* Toast Notification */}
+      {toast && (
+        <div className={`toast ${toast.type === 'error' ? 'error' : ''}`}>
+          {toast.message}
+        </div>
+      )}
+
+      {/* Header */}
       <header className="header">
         <div className="header-left">
           <div className="header-logo">🤖</div>
-          <h1>
-            Multi-Agent Research System
-            <br />
-            <span>Librarian → Researcher → Analyst</span>
-          </h1>
+          <h1>Multi-Agent <span>Research System</span></h1>
         </div>
-        <div style={{ display: 'flex', gap: 12 }}>
-          {config && (
-            <div className="header-badge">
-              🔌 {config.llm_provider?.toUpperCase()} — {config.llm_model}
-            </div>
-          )}
-          <div className="header-badge">
-            <span className="dot"></span>
-            {stats ? `${stats.total_vectors} vectors` : 'Connecting...'}
-          </div>
+        <div className="header-badge">
+          <div className="dot"></div>
+          {config ? `${config.llm_provider.toUpperCase()} (${config.llm_model})` : 'System Offline'}
         </div>
       </header>
 
-      <div className="app-container">
-        {/* AGENT CARDS */}
-        <div className="section-title">Agent Setup Table</div>
-        <div className="agents-grid">
-          {(agents.length > 0 ? agents : [
-            { id: 1, emoji: '📚', name: 'The Librarian', role: 'librarian', description: 'Scans PDFs, extracts text, indexes metadata', capabilities: ['PDF extraction', 'Chunking', 'SQLite indexing'], status: 'ready' },
-            { id: 2, emoji: '🔍', name: 'The Researcher', role: 'researcher', description: 'Semantic search for accurate context retrieval', capabilities: ['Embeddings', 'FAISS search', 'Top-K matching'], status: 'ready' },
-            { id: 3, emoji: '🧠', name: 'The Analyst', role: 'analyst', description: 'Generates structured insights via LLM', capabilities: ['OpenRouter', '4 analysis modes', 'Reports'], status: 'ready' },
-          ]).map(agent => (
-            <div key={agent.id} className={`agent-card ${roleClass(agent.role)}`}>
-              <div className="agent-header">
-                <div className="agent-emoji">{agent.emoji}</div>
-                <div>
-                  <div className="agent-name">{agent.name}</div>
-                  <div className="agent-role">{agent.role}</div>
+      <main className="app-container">
+        {/* God Mode Banner */}
+        {godReport && (
+          <section className="panel" style={{ marginBottom: '40px', border: '1px solid gold', background: 'rgba(255, 215, 0, 0.05)' }}>
+            <div className="panel-title" style={{ color: 'gold' }}>⚡ GOD MODE MASTER REPORT AVAILABLE</div>
+            <div className="result-container has-content" style={{ maxHeight: '400px', border: '1px solid rgba(255, 215, 0, 0.2)' }}>
+              {formatMarkdown(godReport)}
+            </div>
+            <button className="submit-btn" style={{ marginTop: '15px', background: 'linear-gradient(135deg, #FFD700, #FFA500)', color: 'black' }} onClick={() => fetchData()}>
+              Refresh Global Knowledge Memory
+            </button>
+          </section>
+        )}
+
+        {/* Agents Status */}
+        <section>
+          <div className="section-title">Active AI Agents</div>
+          <div className="agents-grid">
+            {agents.map(agent => (
+              <div key={agent.id} className={`agent-card ${agent.role}`}>
+                <div className="agent-header">
+                  <div className="agent-emoji">{agent.emoji}</div>
+                  <div>
+                    <div className="agent-name">{agent.name}</div>
+                    <div className="agent-role">{agent.role}</div>
+                  </div>
+                </div>
+                <p className="agent-desc">{agent.description}</p>
+                <div className="agent-caps">
+                  {agent.capabilities.map((cap, i) => (
+                    <span key={i} className="agent-cap-tag">{cap}</span>
+                  ))}
+                </div>
+                <div className={`agent-status ${agent.status !== 'ready' ? 'working' : ''}`}>
+                  {agent.status === 'ready' ? '● System Standby' : '● Thinking...'}
                 </div>
               </div>
-              <div className="agent-desc">{agent.description}</div>
-              <div className="agent-caps">
-                {(agent.capabilities || []).slice(0, 4).map((cap, i) => (
-                  <span key={i} className="agent-cap-tag">{cap}</span>
-                ))}
-              </div>
-              <div className={`agent-status ${activeStep === agent.role ? 'working' : ''}`}>
-                {activeStep === agent.role ? (
-                  <><span className="spinner" style={{ width: 12, height: 12 }}></span> Working...</>
-                ) : (
-                  <>🟢 Ready</>
-                )}
-              </div>
-            </div>
-          ))}
-        </div>
+            ))}
+          </div>
+        </section>
 
-        {/* PIPELINE FLOW */}
-        <div className="pipeline">
-          {['📄 PDFs', '📚 Librarian', '🔍 Researcher', '🧠 Analyst', '📊 Insights'].map((step, i, arr) => (
-            <span key={i} style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-              <span className={`pipeline-step ${activeStep && step.toLowerCase().includes(activeStep) ? 'active' : ''}`}>
-                {step}
-              </span>
-              {i < arr.length - 1 && <span className="pipeline-arrow">→</span>}
-            </span>
-          ))}
-        </div>
-
-        {/* STATS BAR */}
-        <div className="stats-bar">
+        {/* Stats Bar */}
+        <section className="stats-bar">
           <div className="stat-card">
-            <div className="stat-value">{stats?.total_documents ?? 0}</div>
+            <div className="stat-value">{stats?.total_documents || 0}</div>
             <div className="stat-label">Documents</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{stats?.total_vectors ?? 0}</div>
-            <div className="stat-label">Vectors</div>
+            <div className="stat-value">{stats?.total_vectors || 0}</div>
+            <div className="stat-label">Total Vectors</div>
           </div>
           <div className="stat-card">
-            <div className="stat-value">{stats?.vector_dimension ?? 384}</div>
-            <div className="stat-label">Dimensions</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{config?.llm_provider?.toUpperCase() ?? '—'}</div>
+            <div className="stat-value">{config?.llm_provider || '—'}</div>
             <div className="stat-label">LLM Provider</div>
           </div>
+          <div className="stat-card">
+            <div className="stat-value">3</div>
+            <div className="stat-label">Active Agents</div>
+          </div>
+        </section>
+
+        {/* Pipeline Visual */}
+        <div className="pipeline">
+          <div className={`pipeline-step ${ingesting ? 'active' : ''}`}>📚 Librarian</div>
+          <div className="pipeline-arrow">→</div>
+          <div className={`pipeline-step ${ingesting ? 'active' : ''}`}>🔍 Researcher</div>
+          <div className="pipeline-arrow">→</div>
+          <div className={`pipeline-step ${loading ? 'active' : ''}`}>🧠 Analyst</div>
         </div>
 
-        {/* MAIN GRID */}
+        {/* Main Content Grid */}
         <div className="main-grid">
-          {/* LEFT: Upload + Query */}
-          <div>
-            {/* Upload Panel */}
-            <div className="panel" style={{ marginBottom: 24 }}>
-              <div className="panel-title">📤 Upload & Ingest PDFs</div>
-              <div
-                className={`upload-area ${dragging ? 'dragging' : ''}`}
-                onDragOver={onDragOver}
-                onDragLeave={onDragLeave}
-                onDrop={onDrop}
-                onClick={() => document.getElementById('file-input').click()}
-              >
-                <div className="upload-icon">📄</div>
-                <div className="upload-text">
-                  {uploading ? 'Uploading...' : 'Drop PDF here or click to browse'}
-                </div>
-                <div className="upload-hint">Supports .pdf files</div>
-                <input
-                  id="file-input"
-                  type="file"
-                  accept=".pdf"
-                  hidden
-                  onChange={(e) => e.target.files[0] && handleUpload(e.target.files[0])}
-                />
-              </div>
-              <button
-                className="submit-btn secondary"
-                onClick={handleIngest}
-                disabled={ingesting}
-              >
-                {ingesting ? <><span className="spinner"></span> Processing...</> : '🚀 Ingest All PDFs'}
-              </button>
+          {/* Left: Input Panel */}
+          <div className="panel">
+            <div className="panel-title">🧠 Ask the Analyst</div>
+            
+            <div className="mode-selector">
+              {['analyze', 'summarize', 'compare', 'develop'].map(m => (
+                <button 
+                  key={m} 
+                  className={`mode-btn ${mode === m ? 'active' : ''}`}
+                  onClick={() => setMode(m)}
+                >
+                  {m.toUpperCase()}
+                </button>
+              ))}
             </div>
 
-            {/* Query Panel */}
-            <div className="panel">
-              <div className="panel-title">🔍 Query Your Research</div>
-              <form onSubmit={handleQuery}>
-                <div className="query-input-wrapper">
-                  <textarea
-                    className="query-input"
-                    placeholder="Ask anything about your documents...&#10;e.g. What are the main architectural patterns?"
-                    value={query}
-                    onChange={(e) => setQuery(e.target.value)}
-                  />
-                </div>
-                <div className="mode-selector">
-                  {modes.map(m => (
-                    <button
-                      key={m.id}
-                      type="button"
-                      className={`mode-btn ${mode === m.id ? 'active' : ''}`}
-                      onClick={() => setMode(m.id)}
-                      title={m.desc}
-                    >
-                      {m.label}
-                    </button>
-                  ))}
-                </div>
-                <button className="submit-btn" type="submit" disabled={loading || !query.trim()}>
-                  {loading ? <><span className="spinner"></span> Analyzing...</> : '🧠 Run Agent Pipeline'}
-                </button>
-              </form>
+            <form onSubmit={handleQuery}>
+              <div className="query-input-wrapper">
+                <textarea 
+                  className="query-input"
+                  placeholder="e.g., What are the core development ideas mentioned in these papers?"
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                />
+              </div>
+              <button className="submit-btn" disabled={loading || !query.trim()}>
+                {loading ? <div className="spinner"></div> : 'Generate Insights'}
+              </button>
+            </form>
+
+            <div style={{ marginTop: '30px' }}>
+              <div className="panel-title">📄 Document Ingestion</div>
+              <input 
+                type="file" 
+                ref={fileInputRef} 
+                onChange={handleFileUpload} 
+                style={{ display: 'none' }}
+                accept=".pdf"
+              />
+              <div 
+                className={`upload-area ${uploading ? 'dragging' : ''}`}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <div className="upload-icon">📤</div>
+                <div className="upload-text">{uploading ? 'Uploading...' : 'Click to Upload PDF'}</div>
+                <div className="upload-hint">File will be added to research folder</div>
+              </div>
+              
+              <button 
+                className="submit-btn secondary" 
+                onClick={handleIngest}
+                disabled={ingesting || uploading}
+              >
+                {ingesting ? <div className="spinner"></div> : '✨ Ingest & Index Memory'}
+              </button>
             </div>
           </div>
 
-          {/* RIGHT: Results */}
-          <div>
-            <div className="panel" style={{ minHeight: 400 }}>
-              <div className="panel-title">📊 Results — {mode.charAt(0).toUpperCase() + mode.slice(1)} Mode</div>
-              {result ? (
-                <>
-                  <div className="result-container has-content">{result}</div>
-                  {sources.length > 0 && (
-                    <>
-                      <div style={{ marginTop: 20, fontSize: 13, fontWeight: 600, color: 'var(--text-secondary)' }}>
-                        📎 Sources ({sources.length})
-                      </div>
-                      <div className="sources-list">
-                        {sources.map((s, i) => (
-                          <div key={i} className="source-item">
-                            <div className="source-meta">
-                              <span className="source-rank">#{s.rank}</span>
-                              <span className="source-score">Score: {s.score}</span>
-                            </div>
-                            <div className="source-text">{s.text}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </>
-                  )}
-                </>
-              ) : loading ? (
+          {/* Right: Output Panel */}
+          <div className="panel" style={{ display: 'flex', flexDirection: 'column' }}>
+            <div className="panel-title">📊 Research Insights</div>
+            
+            <div className={`result-container ${result ? 'has-content' : ''}`}>
+              {!result && !loading && (
                 <div className="empty-state">
-                  <div className="spinner" style={{ width: 32, height: 32, marginBottom: 16 }}></div>
-                  <p>Agents are working on your query...</p>
-                </div>
-              ) : (
-                <div className="empty-state">
-                  <div className="empty-icon">🔬</div>
-                  <p>Upload PDFs, ingest them, then ask a question.<br />The 3 agents will work together to find answers.</p>
+                  <div className="empty-icon">💡</div>
+                  <p>Submit a query to see agent analysis here.</p>
                 </div>
               )}
+              {loading && (
+                <div className="empty-state">
+                  <div className="spinner" style={{ marginBottom: '15px' }}></div>
+                  <p>Agents are processing context...</p>
+                </div>
+              )}
+              {result && formatMarkdown(result)}
             </div>
 
-            {/* Documents Table */}
-            {documents.length > 0 && (
-              <div className="panel" style={{ marginTop: 24 }}>
-                <div className="panel-title">📚 Indexed Documents ({documents.length})</div>
-                <table className="docs-table">
-                  <thead>
-                    <tr>
-                      <th>ID</th>
-                      <th>Filename</th>
-                      <th>Pages</th>
-                      <th>Chunks</th>
-                      <th>Indexed</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {documents.map((doc, i) => (
-                      <tr key={i}>
-                        <td>{doc.id}</td>
-                        <td style={{ color: 'var(--accent-purple)' }}>{doc.filename}</td>
-                        <td>{doc.page_count}</td>
-                        <td>{doc.chunk_count}</td>
-                        <td>{doc.indexed_at?.split('.')[0]}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+            {sources.length > 0 && (
+              <div style={{ marginTop: '20px' }}>
+                <div className="panel-title" style={{ fontSize: '13px', marginBottom: '10px' }}>🔍 Retrieved Context</div>
+                <div className="sources-list">
+                  {sources.map((src, i) => (
+                    <div key={i} className="source-item">
+                      <div className="source-meta">
+                        <span className="source-rank">#{src.rank} Source</span>
+                        <span className="source-score">Match: {(src.score * 100).toFixed(1)}%</span>
+                      </div>
+                      <div className="source-text">"{src.text}..."</div>
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
           </div>
         </div>
-      </div>
 
-      {/* TOAST */}
-      {toast && (
-        <div className={`toast ${toast.isError ? 'error' : ''}`}>
-          {toast.message}
-        </div>
-      )}
-    </>
-  )
-}
+        {/* Documents Section */}
+        <section className="panel" style={{ marginTop: '24px' }}>
+          <div className="panel-title">📚 Document Library</div>
+          {documents.length > 0 ? (
+            <div style={{ overflowX: 'auto' }}>
+              <table className="docs-table">
+                <thead>
+                  <tr>
+                    <th>Filename</th>
+                    <th>Pages</th>
+                    <th>Chunks</th>
+                    <th>Keywords</th>
+                    <th>Status</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {documents.map((doc, i) => (
+                    <tr key={i}>
+                      <td style={{ fontWeight: 600 }}>{doc.filename}</td>
+                      <td>{doc.page_count}</td>
+                      <td>{doc.chunk_count}</td>
+                      <td style={{ fontSize: '11px' }}>{doc.keywords}</td>
+                      <td style={{ color: 'var(--accent-green)' }}>✅ Indexed</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          ) : (
+            <div className="empty-state">
+              <p>No documents indexed yet. Upload a PDF to begin.</p>
+            </div>
+          )}
+        </section>
+      </main>
+    </div>
+  );
+};
 
-export default App
+export default App;

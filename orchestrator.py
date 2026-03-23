@@ -12,8 +12,8 @@ from rich.console import Console
 from rich.panel import Panel
 from rich.text import Text
 
-from .setup_table import AgentSetupTable, AgentStatus
-from .agents import LibrarianAgent, ResearcherAgent, AnalystAgent
+from setup_table import AgentSetupTable, AgentStatus
+from agents import LibrarianAgent, ResearcherAgent, AnalystAgent
 
 console = Console()
 
@@ -63,7 +63,7 @@ class AgentOrchestrator:
             Text.from_markup(
                 "[bold cyan]Multi-Agent Research System[/bold cyan]\n"
                 "[dim]Three specialized agents working together[/dim]\n\n"
-                "[magenta]📚 Librarian[/magenta] → [magenta]🔍 Researcher[/magenta] → [magenta]🧠 Analyst[/magenta]"
+                "[magenta][LIBRARIAN][/magenta] -> [magenta][RESEARCHER][/magenta] -> [magenta][ANALYST][/magenta]"
             ),
             border_style="bright_blue",
             padding=(1, 4),
@@ -77,7 +77,7 @@ class AgentOrchestrator:
         """
         Step 1 & 2: Librarian reads PDFs, Researcher indexes them.
         """
-        console.print("\n[bold cyan]═══ STEP 1: LIBRARIAN PROCESSING ═══[/bold cyan]")
+        console.print("\n[bold cyan]=== STEP 1: LIBRARIAN PROCESSING ===[/bold cyan]")
         self.setup_table.update_status("librarian", AgentStatus.WORKING, "Processing PDFs")
         
         # Librarian extracts text
@@ -89,7 +89,7 @@ class AgentOrchestrator:
         self.setup_table.increment_processed("librarian", doc_results["total_files"])
 
         if chunks:
-            console.print("\n[bold cyan]═══ STEP 2: RESEARCHER INDEXING ═══[/bold cyan]")
+            console.print("\n[bold cyan]=== STEP 2: RESEARCHER INDEXING ===[/bold cyan]")
             self.setup_table.update_status("researcher", AgentStatus.WORKING, "Embedding chunks")
             
             # Build metadata for each chunk
@@ -117,7 +117,7 @@ class AgentOrchestrator:
             mode: "analyze", "summarize", "compare", or "develop"
             top_k: Number of context chunks to retrieve
         """
-        console.print(f"\n[bold cyan]═══ QUERYING: {mode.upper()} ═══[/bold cyan]")
+        console.print(f"\n[bold cyan]=== QUERYING: {mode.upper()} ===[/bold cyan]")
         console.print(f"[dim]Question: {question}[/dim]\n")
 
         # Researcher retrieves relevant context
@@ -129,7 +129,7 @@ class AgentOrchestrator:
                                         f"Retrieved {len(context_chunks)} chunks")
 
         if not context_chunks:
-            return "❌ No relevant context found. Please ingest documents first."
+            return "[FAILED] No relevant context found. Please ingest documents first."
 
         # Display retrieved sources
         console.print("[dim]Retrieved sources:[/dim]")
